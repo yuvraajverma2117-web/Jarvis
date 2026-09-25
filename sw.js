@@ -1,0 +1,4 @@
+const CACHE='jarvis-v2.0.0';const ASSETS=['./','./index.html','./style.css','./app.js','./core.js','./store.js','./voice.js','./icon.svg','./icon-192.png','./icon-512.png','./manifest.json'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('jarvis-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();})()));
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||url.pathname.includes('/api/'))return;event.respondWith((async()=>{const c=await caches.open(CACHE),hit=await c.match(event.request);if(hit)return hit;return fetch(event.request);})());});

@@ -1,0 +1,6 @@
+import {fresh} from './core.js';
+let db;
+export async function openStore(){db=await new Promise((resolve,reject)=>{const r=indexedDB.open('jarvis-personal-v2',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return (await read('state'))||fresh();}
+export function read(key){return new Promise((resolve,reject)=>{const r=db.transaction('data').objectStore('data').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+export function write(state){return new Promise((resolve,reject)=>{const tx=db.transaction('data','readwrite');tx.objectStore('data').put(state,'state');tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error||Error('Storage failed'));tx.onerror=()=>reject(tx.error);});}
+export async function legacyMemories(){if(!indexedDB.databases)return[];if(!(await indexedDB.databases()).some(d=>d.name==='jarvis-memory-v1'))return[];return new Promise((resolve,reject)=>{const req=indexedDB.open('jarvis-memory-v1');req.onsuccess=()=>{const old=req.result;if(!old.objectStoreNames.contains('facts')){old.close();return resolve([]);}const r=old.transaction('facts').objectStore('facts').getAll();r.onsuccess=()=>{old.close();resolve(r.result);};r.onerror=()=>{old.close();reject(r.error);};};req.onerror=()=>reject(req.error);});}
